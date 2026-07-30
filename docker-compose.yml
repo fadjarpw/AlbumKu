@@ -1,0 +1,9 @@
+services:
+  albumku:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: albumku:latest
+    ports:
+      - "${ALBUMKU_PORT:-8088}:3000"
+    restart: unless-stopped

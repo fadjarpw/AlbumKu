@@ -1,0 +1,8 @@
+Produk      : AlbumKu
+Image       : albumku:1.0.0
+Sistem      : linux
+Arsitektur  : amd64
+Ukuran TAR  : 64.631.296 byte (61,64 MB)
+Port        : 3000
+Port host   : 8088
+SHA-256     : d482f867edb8b0209dc2c17e9be8785592a23cea391df1e922a0f782f7906a23

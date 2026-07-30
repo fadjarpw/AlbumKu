@@ -1,0 +1,14 @@
+.git
+.gitignore
+.npm-cache
+.next
+.vinext
+.wrangler
+dist
+node_modules
+outputs
+work
+*.log
+*.tsbuildinfo
+MULAI_ALBUMKU.bat
+MULAI_DOCKER.bat
