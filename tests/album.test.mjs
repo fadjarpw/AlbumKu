@@ -7,9 +7,11 @@ import {
   calculateResizedDimensions,
   calculatePageCount,
   createBindingMargins,
+  createPhotoAdjustmentFilter,
   createPdfFilename,
   formatFileSize,
   moveItem,
+  normalizePhotoAdjustments,
   normalizePhotoTransform,
   paginateItems,
   TEMPLATES,
@@ -75,7 +77,7 @@ test("variasi otomatis memakai beberapa template tanpa kehilangan foto", () => {
 
   assert.deepEqual(
     pages.map((page) => page.templateId),
-    ["feature-5", "strip-4", "grid-6"],
+    ["grid-4", "feature-5", "strip-4", "duo"],
   );
   assert.deepEqual(
     pages.flatMap((page) => page.items),
@@ -128,13 +130,33 @@ test("posisi dan zoom foto dibatasi agar editor tetap aman", () => {
   assert.deepEqual(normalizePhotoTransform(90, -70, 4), {
     positionX: 50,
     positionY: -50,
-    scale: 2.5,
+    scale: 3,
   });
   assert.deepEqual(normalizePhotoTransform(12, -8, 1.4), {
     positionX: 12,
     positionY: -8,
     scale: 1.4,
   });
+});
+
+test("koreksi cetak dibatasi pada rentang yang aman", () => {
+  assert.deepEqual(normalizePhotoAdjustments(200, 50, Number.NaN), {
+    brightness: 140,
+    contrast: 80,
+    saturation: 100,
+  });
+  assert.deepEqual(normalizePhotoAdjustments(112.4, 98.3, 104.2), {
+    brightness: 112,
+    contrast: 98,
+    saturation: 104,
+  });
+});
+
+test("filter koreksi cetak memiliki urutan yang konsisten", () => {
+  assert.equal(
+    createPhotoAdjustmentFilter({ brightness: 112, contrast: 98, saturation: 104 }),
+    "brightness(112%) contrast(98%) saturate(104%)",
+  );
 });
 
 test("nama file PDF aman dan mudah dikenali", () => {
@@ -180,9 +202,28 @@ test("template setiap halaman dapat diganti tanpa kehilangan foto", () => {
   );
 });
 
-test("template halaman yang terlalu kecil ditolak", () => {
+test("template lebih kecil mengalirkan sisa foto ke halaman berikutnya", () => {
   const pages = [{ templateId: "grid-6", items: [1, 2, 3, 4, 5, 6] }];
-  assert.equal(applyPageTemplateOverrides(pages, { 0: "duo" })[0].templateId, "grid-6");
+  const result = applyPageTemplateOverrides(pages, { 0: "duo" });
+  assert.equal(result[0].templateId, "duo");
+  assert.deepEqual(result.map((page) => page.items), [[1, 2], [3, 4, 5, 6]]);
+});
+
+test("mengganti empat ke lima otomatis menarik foto berikutnya", () => {
+  const result = buildAlbumPages([1, 2, 3, 4, 5, 6, 7, 8], "grid-4", false, { 0: "feature-5" });
+  assert.deepEqual(result.map((page) => page.items), [[1, 2, 3, 4, 5], [6, 7, 8]]);
+});
+test("seluruh perubahan kapasitas mempertahankan urutan dan setiap foto tepat sekali", () => {
+  for (let count = 1; count <= 100; count++) for (const template of TEMPLATES) for (const variety of [true, false]) {
+    const photos = Array.from({ length: count }, (_, i) => i);
+    const pages = buildAlbumPages(photos, "grid-8", variety, { 0: template.id, 2: "single" });
+    assert.deepEqual(pages.flatMap((page) => page.items), photos);
+    for (const page of pages) assert.ok(page.items.length <= TEMPLATES.find((t) => t.id === page.templateId).slots);
+  }
+});
+test("zoom out diperbolehkan sampai 50 persen", () => {
+  assert.equal(normalizePhotoTransform(0, 0, 0.1).scale, 0.5);
+  assert.equal(normalizePhotoTransform(0, 0, 0.7).scale, 0.7);
 });
 
 test("semua varian template memiliki id unik", () => {

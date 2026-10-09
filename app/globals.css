@@ -952,6 +952,73 @@ input[type="range"] {
   margin-top: 14px;
 }
 
+.print-adjustment-editor {
+  background: #f4f8f5;
+  border: 1px solid #dbe8df;
+  border-radius: 10px;
+  margin-top: 14px;
+  padding: 10px;
+}
+
+.adjustment-heading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.adjustment-heading > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.adjustment-heading strong {
+  font-size: 9px;
+}
+
+.adjustment-heading small {
+  color: var(--muted);
+  font-size: 7px;
+  margin-top: 2px;
+}
+
+.adjustment-heading select {
+  background-color: white;
+  font-size: 8px;
+  height: 30px;
+  max-width: 120px;
+}
+
+.print-adjustment-editor > p {
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.45;
+  margin: 8px 0 10px;
+}
+
+.adjustment-sliders {
+  display: grid;
+  gap: 8px;
+}
+
+.adjustment-sliders label {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: 74px minmax(0, 1fr);
+}
+
+.adjustment-sliders label > span {
+  color: var(--muted);
+  display: flex;
+  font-size: 8px;
+  justify-content: space-between;
+}
+
+.adjustment-sliders strong {
+  color: var(--ink);
+  font-size: 8px;
+}
+
 .swatches {
   display: flex;
   gap: 8px;
@@ -1151,6 +1218,11 @@ input[type="range"] {
 
 .album-page.is-current {
   display: flex;
+}
+
+.album-page img,
+.thumb-main img {
+  filter: var(--photo-filter);
 }
 
 .cover-page {
@@ -2255,4 +2327,44 @@ input[type="range"] {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.project-panel .section-heading { flex-wrap: wrap; gap: 8px; }
+.project-panel .section-heading small { font-size: 10px; color: var(--accent); }
+.project-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.project-actions button, .preview-zoom button { background: white; border: 1px solid var(--line); border-radius: 6px; padding: 7px; color: var(--accent); font-size: 11px; }
+.project-error, .print-warning { font-size: 11px; line-height: 1.5; background: #fff6e5; color: #895d12; padding: 10px; border-radius: 7px; }
+.project-error { background: #fff0ed; color: #a13121; }
+.print-summary { display: grid; gap: 5px; background: var(--accent-soft); border-radius: 8px; padding: 12px; font-size: 12px; margin-bottom: 12px; }
+.form-grid input { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; }
+.preview-zoom { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+.preview-zoom strong { min-width: 40px; font-size: 12px; }
+.preview-zoom input { width: 100px; accent-color: var(--accent); }
+.preview-zoom small { font-size: 10px; color: var(--muted); }
+.preview-viewport { overflow: auto; width: 100%; padding: 8px 12px 20px; min-height: 0; flex: 1; }
+.screen-pages { width: max-content; max-width: none; margin: 0 auto; }
+.page-stage { min-height: 0; overflow: auto; }
+.photo-slot canvas, .cover-photo canvas { display: block; width: 100%; height: 100%; }
+.album-page.print-sheet { padding: 0; background: #fff; }
+.print-photo { position: absolute; background: #fff; border-radius: 0; }
+.print-photo img, .print-photo canvas { position: absolute; left: 50%; top: 50%; }
+.safe-area-guide { position: absolute; border: 1px dashed #85ad98; pointer-events: none; z-index: 4; }
+.cut-marks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+.pdf-capture { max-width: none !important; max-height: none !important; }
+.album-page { flex: none; max-width: none; max-height: none; }
+.print-page-title strong { font-size: calc(var(--render-width) * 0.041); }
+.print-page-title span { font-size: calc(var(--render-width) * 0.019); }
+.page-footer { font-size: calc(var(--render-width) * 0.018); }
+.cover-copy h1 { font-size: calc(var(--render-width) * 0.12); }
+.cover-copy > span, .cover-copy p { font-size: calc(var(--render-width) * 0.025); }
+.cover-footer { font-size: calc(var(--render-width) * 0.017); }
+.cover-classic .cover-copy h1 { font-size: calc(var(--render-width) * 0.075); }
+.cover-page { border-style: solid; border-color: var(--paper-background); border-width: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left); }
+.photo-name { font-size: calc(var(--render-width) * 0.022); }
+@media print {
+  .preview-zoom, .safe-area-guide { display: none !important; }
+  .preview-viewport { display: block; width: auto; overflow: visible; margin: 0; padding: 0; }
+  .screen-pages { zoom: 1 !important; }
+  .album-page.print-sheet { padding: 0 !important; }
+  .album-page { --render-width: var(--print-page-width) !important; }
 }

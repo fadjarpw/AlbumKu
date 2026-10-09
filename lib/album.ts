@@ -35,6 +35,18 @@ export type PageMargins = {
   left: number;
 };
 
+export type PhotoAdjustments = {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+};
+
+export const DEFAULT_PHOTO_ADJUSTMENTS: PhotoAdjustments = {
+  brightness: 112,
+  contrast: 98,
+  saturation: 104,
+};
+
 export const TEMPLATES: AlbumTemplate[] = [
   { id: "single", name: "Satu Besar", slots: 1 },
   { id: "duo", name: "Dua Sejajar", slots: 2 },
@@ -104,30 +116,25 @@ export function buildAlbumPages<T>(
   items: readonly T[],
   templateId: string,
   useVariety: boolean,
+  overrides: Readonly<Record<number, string>> = {},
 ): AlbumPage<T>[] {
   const baseTemplate = TEMPLATES.find((template) => template.id === templateId);
   if (!baseTemplate) throw new Error("Template album tidak ditemukan.");
 
-  if (!useVariety) {
-    return paginateItems(items, baseTemplate.slots).map((pageItems) => ({
-      templateId: baseTemplate.id,
-      items: pageItems,
-    }));
-  }
-
-  const sequence = ["feature-5", "strip-4", "mosaic-6", "duo-stack", "grid-8"];
+  const sequence = [...new Set([baseTemplate.id, "feature-5", "strip-4", "mosaic-6", "duo-stack", "grid-8"])];
   const pages: AlbumPage<T>[] = [];
   let cursor = 0;
   let sequenceIndex = 0;
 
   while (cursor < items.length) {
     const remaining = items.length - cursor;
-    let template =
-      remaining <= 8
-        ? TEMPLATES.find((candidate) => candidate.slots >= remaining)
-        : TEMPLATES.find((candidate) => candidate.id === sequence[sequenceIndex]);
-
-    template ??= baseTemplate;
+    const override = TEMPLATES.find((candidate) => candidate.id === overrides[pages.length]);
+    let template = override ?? (useVariety
+      ? TEMPLATES.find((candidate) => candidate.id === sequence[sequenceIndex]) ?? baseTemplate
+      : baseTemplate);
+    if (useVariety && !override && remaining < template.slots) {
+      template = TEMPLATES.find((candidate) => candidate.slots >= remaining) ?? template;
+    }
     pages.push({
       templateId: template.id,
       items: items.slice(cursor, cursor + template.slots),
@@ -143,17 +150,10 @@ export function applyPageTemplateOverrides<T>(
   pages: readonly AlbumPage<T>[],
   overrides: Readonly<Record<number, string>>,
 ): AlbumPage<T>[] {
-  return pages.map((page, index) => {
-    const requestedId = overrides[index];
-    if (!requestedId) return { ...page, items: [...page.items] };
-    const requestedTemplate = TEMPLATES.find((template) => template.id === requestedId);
-    if (!requestedTemplate || requestedTemplate.slots < page.items.length) {
-      return { ...page, items: [...page.items] };
-    }
-    return {
-      templateId: requestedTemplate.id,
-      items: [...page.items],
-    };
+  const templates = Object.fromEntries(pages.map((page, index) => [index, page.templateId]));
+  return buildAlbumPages(pages.flatMap((page) => page.items), pages[0]?.templateId ?? "grid-4", false, {
+    ...templates,
+    ...overrides,
   });
 }
 
@@ -193,8 +193,31 @@ export function normalizePhotoTransform(positionX: number, positionY: number, sc
   return {
     positionX: clamp(positionX, -50, 50),
     positionY: clamp(positionY, -50, 50),
-    scale: clamp(scale, 1, 2.5),
+    scale: clamp(scale, 0.5, 3),
   };
+}
+
+export function normalizePhotoAdjustments(
+  brightness: number,
+  contrast: number,
+  saturation: number,
+): PhotoAdjustments {
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, Number.isFinite(value) ? value : 100));
+  return {
+    brightness: clamp(Math.round(brightness), 80, 140),
+    contrast: clamp(Math.round(contrast), 80, 125),
+    saturation: clamp(Math.round(saturation), 70, 140),
+  };
+}
+
+export function createPhotoAdjustmentFilter(adjustments: PhotoAdjustments) {
+  const normalized = normalizePhotoAdjustments(
+    adjustments.brightness,
+    adjustments.contrast,
+    adjustments.saturation,
+  );
+  return `brightness(${normalized.brightness}%) contrast(${normalized.contrast}%) saturate(${normalized.saturation}%)`;
 }
 
 export function createPdfFilename(title: string, brand: string) {
